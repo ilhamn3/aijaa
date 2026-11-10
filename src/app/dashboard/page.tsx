@@ -92,7 +92,7 @@ export default async function DashboardPage() {
               Documents
             </h2>
             <p className="text-xs text-slate-500 mt-0.5">
-              Create, edit, autosave, and collaborate in real-time.
+              Create, edit, and share documents.
             </p>
           </div>
           <div className="flex items-center gap-2.5">
