@@ -86,3 +86,4 @@ To ensure facts-only verification, every layer of the system was tested and vali
 5. **Database Migration & Seeding:**
    - Ran `prisma migrate dev --name init` against Neon PostgreSQL, creating migration `20261110043602_init`.
    - Verified idempotent seeding with `npm run seed`, creating Alice (Owner), Bob (Editor), and Carol (Viewer).
+
