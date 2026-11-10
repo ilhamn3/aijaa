@@ -36,7 +36,7 @@ Designed and built for a full-stack take-home evaluation with a hard timebox (4�
 - **Robust Quality & Performance:**
   - Input validation with `zod`.
   - Streaming loading skeletons (`loading.tsx`), custom 404 (`not-found.tsx`), and error boundaries (`error.tsx`).
-  - 41 automated unit and integration tests passing in Vitest.
+  - 41 automated unit tests passing in Vitest (testing access-logic, sharing rules, file converters, and markdown export).
 
 ---
 
@@ -102,7 +102,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ## Running Automated Tests
 
-Ajaia includes 41 Vitest unit and integration tests covering pure access logic, role transitions, immediate revocations, self-sharing prevention, multi-format file conversions, and Markdown export:
+Ajaia includes 41 Vitest unit tests covering pure access-authorization logic, sharing rules, multi-format file conversions, and Markdown export directly (unit tests without requiring HTTP mock servers or live DB fixtures):
 
 ```bash
 # Run all tests once
@@ -139,6 +139,10 @@ npx vitest
   - `.docx` (Microsoft Word) — converted via `mammoth` and parsed to TipTap JSON.
   - `.txt` (Plain text) — parsed into TipTap paragraph nodes.
 - **Maximum File Size:** `2MB` (`2,097,152 bytes`).
+- **Status Codes:**
+  - `413 Payload Too Large`: Uploaded file exceeds the 2MB limit.
+  - `415 Unsupported Media Type`: Extension or MIME type is not `.txt`, `.md`, or `.docx`.
+  - `400 Bad Request`: Empty or zero-byte file, unparseable payload, or missing file part.
 - **Route Handler Runtime:** `export const runtime = "nodejs";` in `src/app/api/documents/upload/route.ts`.
 
 ---

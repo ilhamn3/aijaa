@@ -10,7 +10,7 @@
 
 Ajaia is a lightweight, Google Docs-inspired collaborative document editor built to demonstrate full-stack engineering proficiency across the Next.js App Router, TypeScript, TipTap rich text, Prisma ORM, and Neon PostgreSQL.
 
-All core requirements have been implemented, verified, and backed by 41 automated unit and integration tests:
+All core requirements have been implemented, verified, and backed by 41 automated unit tests:
 - **Rich Text & Autosave:** TipTap editor with hydration safety (`immediatelyRender: false`), headings (H1–H3), lists, inline marks, 1.5s debounced autosave, manual save, offline error recovery with retry, and inline title renaming (120 chars max).
 - **File Upload:** Uploads and converts `.txt`, `.md`, and `.docx` files (up to 2MB) into editable TipTap documents using Node.js runtime (`mammoth` + `marked`) with strict RFC-compliant status codes (413 Payload Too Large, 415 Unsupported Media Type, 400 Bad Request) and AST schema sanitization.
 - **Granular Sharing:** Centralized pure access logic (`getDocumentRole`), owner share controls, immediate revocation, view-only enforcement (both UI and server 403), and separated Dashboard sections ("My documents" vs "Shared with me").
@@ -77,7 +77,7 @@ All seeded accounts use the password: **`password123`**.
 
 ## 3. Test Suite Verification
 
-Ajaia includes 41 automated unit and integration tests passing in Vitest (4 test files):
+Ajaia includes 41 automated unit tests passing in Vitest across 4 test files (testing pure access logic, sharing rules, multi-format file converters, and markdown export directly; no HTTP route-level mock-server integration tests):
 
 ```bash
 npm test
@@ -108,7 +108,9 @@ npm test
 
 ## 4. Documentation Index
 
-- **`README.md`:** Comprehensive setup, environment variables, seeding, local running, testing, and Vercel deployment guide.
+- **`README.md`:** Comprehensive setup, environment variables, seeding, local running, testing, file upload specs, and Vercel deployment guide.
 - **`ARCHITECTURE.md`:** Deep-dive into technical trade-offs, pure authorization design, deliberate scope cuts, and future 2–4 hour roadmap.
-- **`AI_LOG.md`:** Chronological record of all architectural decisions, alternatives evaluated, and bugs resolved throughout the build.
+- **`AI_WORKFLOW.md`:** Full documentation of AI tools used, human-in-the-loop corrections and rejected proposals, correctness verification, and workflow analysis.
+- **`AI_LOG.md`:** Chronological record of all architectural decisions, alternatives evaluated, and bugs resolved throughout each phase.
+- **`video-link.txt`:** Walkthrough recording link placeholder.
 

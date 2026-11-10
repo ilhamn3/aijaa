@@ -4,8 +4,8 @@
 
 ### 1. Prisma Version Decision
 - **Version Chosen:** Prisma v6 (`^6.19.3`).
-- **Why:** During dependency checks, npm indicated Prisma v8-rc is in release candidate stage and Prisma 7 introduces major breaking configuration shifts (deprecating `package.json#prisma` and altering driver adapters). Prisma v6 is mature, stable, and has reliable native support for Neon PostgreSQL with dual `DATABASE_URL` (pooled connection for serverless runtime) and `DIRECT_URL` (unpooled connection for migrations).
-- **Alternatives Rejected:** Prisma v7/v8-rc were rejected to avoid bleeding-edge adapter instability on Vercel deployment.
+- **Why:** During dependency checks, npm indicated Prisma v8-rc is in release candidate stage and Prisma 7 introduces major configuration shifts (moving seed configuration out of `package.json#prisma` to `prisma.config.ts` and revising driver adapter requirements for serverless environments). In Prisma 6, the standard query engine connects reliably to PostgreSQL using the connection string directly without requiring extra driver adapter boilerplate (`@prisma/adapter-pg` or `@prisma/adapter-neon`). Prisma v6 is mature, stable, and has reliable native support for Neon PostgreSQL with dual `DATABASE_URL` (pooled connection for serverless runtime) and `DIRECT_URL` (unpooled connection for migrations).
+- **Alternatives Rejected:** Prisma v7/v8-rc were rejected to avoid bleeding-edge adapter and configuration churn on Vercel deployment.
 
 ### 2. Authentication & Session Strategy
 - **Mechanism:** Signed `httpOnly` JWT session cookies (`ajaia_session`) using `jose` with `HS256`, `sameSite: "lax"`, and `secure` in production.
