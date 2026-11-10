@@ -106,7 +106,7 @@
 ## Phase 4: File Upload & Format Conversion
 
 ### 1. File Upload Requirements & Route Configuration
-- **Node.js Runtime Requirement:** Explicitly set `export const runtime = "nodejs";` in `src/app/api/documents/upload/route.ts` as required by the architecture specification for binary parsing.
+- **Node.js Runtime Requirement:** Explicitly set `export const runtime = "nodejs";` in `src/app/api/documents/upload/route.ts` as required by the architecture specification for binary buffer processing.
 - **Strict Validation Rules:**
   - Supported extensions: `.txt`, `.md`, `.docx` only. All other file formats receive **400 Bad Request** with clear instructions.
   - Maximum file size: **2MB** (`MAX_FILE_SIZE_BYTES = 2 * 1024 * 1024`). Files exceeding 2MB receive **400 Bad Request**.
@@ -127,3 +127,29 @@
 ### 4. Unit & Integration Tests (`src/lib/convertFile.test.ts`)
 - 8 tests covering plain text conversion, markdown parsing (headings, bold, lists), file extension extraction, title derivation, and rejection of invalid file types (`.zip`, `.png`).
 - Total test suite expanded to **32/32 passing tests**.
+
+---
+
+## Phase 5: Validation, Error Handling, Loading States & UI Polish
+
+### 1. Input Validation Matrix (Zod & Schema Enforcement)
+- `/api/auth/login`: Zod schema validates email and password; returns generic `"Invalid credentials"` (400/401) to prevent account enumeration.
+- `/api/documents`: Zod validates optional `title` with trimming and length constraints (1-255 chars).
+- `/api/documents/[id]`: Zod validates `title` and `content` dictionary. Requires at least one field to mutate.
+- `/api/documents/[id]/shares`: Zod validates `email` format and `permission` (`VIEW` | `EDIT`).
+- `/api/documents/upload`: Validates multipart payload, enforce `< 2MB` and extensions (`.txt`, `.md`, `.docx`).
+
+### 2. Status Code Consistency & Security Invariants
+- `400 Bad Request`: Client validation error, self-sharing attempt, unsupported file formats, or oversized files.
+- `401 Unauthorized`: Missing or invalid session cookie.
+- `403 Forbidden`: View-only user attempting write, non-owner attempting delete or managing shares.
+- `404 Not Found`: Conceals unauthorized document access (never leaks document existence to unshared users) or unknown user email during share invitation.
+- `500 Internal Server Error`: Generic safe messages logged securely to server console without leaking database credentials or stack traces.
+
+### 3. Next.js Streaming Loading Skeletons
+- `src/app/dashboard/loading.tsx`: Instant animated skeleton of header, stats, and document grid while Server Components query Postgres.
+- `src/app/documents/[id]/loading.tsx`: Instant animated skeleton of document title, action controls, formatting toolbar, and white paper canvas.
+
+### 4. Application Error Boundaries & 404 Handlers
+- `src/app/not-found.tsx`: Clean Google Docs-inspired 404 interface with immediate button returning to Dashboard.
+- `src/app/error.tsx`: Client-side error boundary catching uncaught exceptions with `"Try again"` retry logic and fallback navigation.
