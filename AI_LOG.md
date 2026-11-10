@@ -78,7 +78,7 @@
   - Validates email and permission (`VIEW` | `EDIT`) with Zod.
   - Checks if user exists in the database; returns a clear 404 message (`No user with that email found`) if not found.
   - Prevents owners from sharing with themselves (`400 Bad Request`).
-  - Upserts share on `documentId_userId` compound unique key, seamlessly updating permission if the user is already shared.
+  - Upserts share on `documentId_userId` compound unique key, seamlessly updating permission if the user is already invited.
 - **`PATCH /api/documents/[id]/shares/[shareId]` & `/shares`:** Owner only. Allows changing permissions between `VIEW` and `EDIT`.
 - **`DELETE /api/documents/[id]/shares/[shareId]` & `/shares`:** Owner only. Revokes access by deleting the `DocumentShare` record.
 
@@ -100,3 +100,30 @@
   - Permission transitions: Verifies immediate role transitions when changing `VIEW` to `EDIT` and vice versa.
   - Immediate revocation: Verifies that deleting a share immediately removes all edit and read access on subsequent queries.
   - Self-sharing prevention rule validation.
+
+---
+
+## Phase 4: File Upload & Format Conversion
+
+### 1. File Upload Requirements & Route Configuration
+- **Node.js Runtime Requirement:** Explicitly set `export const runtime = "nodejs";` in `src/app/api/documents/upload/route.ts` as required by the architecture specification for binary parsing.
+- **Strict Validation Rules:**
+  - Supported extensions: `.txt`, `.md`, `.docx` only. All other file formats receive **400 Bad Request** with clear instructions.
+  - Maximum file size: **2MB** (`MAX_FILE_SIZE_BYTES = 2 * 1024 * 1024`). Files exceeding 2MB receive **400 Bad Request**.
+
+### 2. Document Conversion Pipeline (`src/lib/convertFile.ts`)
+- **Word Documents (`.docx`):** Converted using `mammoth.convertToHtml({ buffer })` and parsed into TipTap JSON using `@tiptap/html`'s `generateJSON(html, extensions)`.
+- **Markdown (`.md`):** Converted via `marked.parse(markdown)` into HTML and generated into TipTap JSON via `generateJSON`.
+- **Plain Text (`.txt`):** Split by newlines and mapped directly into TipTap `{ type: "paragraph", content: [{ type: "text", text: line }] }` nodes.
+- **Title Extraction:** Automatically sanitizes the original file name as the document title.
+
+### 3. UI Component (`UploadDocumentModal.tsx`)
+- Placed on the dashboard actions bar alongside "New document".
+- Features a dropzone supporting drag-and-drop and file browsing.
+- Clear visual cues highlighting supported formats (`.md`, `.docx`, `.txt`) and the `2MB` ceiling.
+- Client-side pre-validation prevents uploading oversized or invalid files.
+- Redirects immediately to the new document editor upon successful upload and conversion.
+
+### 4. Unit & Integration Tests (`src/lib/convertFile.test.ts`)
+- 8 tests covering plain text conversion, markdown parsing (headings, bold, lists), file extension extraction, title derivation, and rejection of invalid file types (`.zip`, `.png`).
+- Total test suite expanded to **32/32 passing tests**.
