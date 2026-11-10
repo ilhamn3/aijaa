@@ -103,18 +103,23 @@ export default function UploadDocumentModal() {
 
   return (
     <>
-      <button
-        onClick={() => {
-          setIsOpen(true);
-          setFile(null);
-          setError(null);
-        }}
-        className="inline-flex items-center gap-2 bg-white hover:bg-slate-50 text-slate-700 font-medium text-sm px-3.5 py-2.5 rounded-xl border border-slate-200/90 shadow-2xs transition-colors cursor-pointer"
-        title="Upload .txt, .md, or .docx"
-      >
-        <Upload className="w-4 h-4 text-slate-500" />
-        <span>Upload file</span>
-      </button>
+      <div className="flex flex-col items-start">
+        <button
+          onClick={() => {
+            setIsOpen(true);
+            setFile(null);
+            setError(null);
+          }}
+          className="inline-flex items-center gap-2 bg-white hover:bg-slate-50 text-slate-700 font-medium text-sm px-3.5 py-2.5 rounded-xl border border-slate-200/90 shadow-2xs transition-colors cursor-pointer"
+          title="Upload .txt, .md, or .docx (max 2MB)"
+        >
+          <Upload className="w-4 h-4 text-slate-500" />
+          <span>Upload file</span>
+        </button>
+        <span className="text-[10px] text-slate-400 mt-1 pl-1 hidden sm:inline">
+          .txt, .md, .docx • max 2MB
+        </span>
+      </div>
 
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
@@ -261,3 +266,4 @@ export default function UploadDocumentModal() {
     </>
   );
 }
+

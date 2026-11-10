@@ -3,12 +3,12 @@ import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import {
   convertUploadedFileToTipTap,
-  getFileExtension,
+  validateFileType,
   MAX_FILE_SIZE_BYTES,
   SUPPORTED_EXTENSIONS,
 } from "@/lib/convertFile";
 
-// Explicit requirement: Route handler must use export const runtime = "nodejs"
+// Route handler must use export const runtime = "nodejs"
 export const runtime = "nodejs";
 
 export async function POST(req: NextRequest) {
@@ -28,46 +28,60 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 1. File Size Validation (max 2MB)
+    // 1. Validate Non-Empty File (400 Bad Request)
+    if (file.size === 0) {
+      return NextResponse.json(
+        { error: "The uploaded file is empty (0 bytes)." },
+        { status: 400 }
+      );
+    }
+
+    // 2. Validate File Size: Max 2MB (413 Payload Too Large)
     if (file.size > MAX_FILE_SIZE_BYTES) {
       const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
       return NextResponse.json(
         {
           error: `File size (${sizeMB}MB) exceeds the maximum limit of 2MB. Please upload a smaller file.`,
         },
-        { status: 400 }
+        { status: 413 }
       );
     }
 
-    // 2. File Type Validation (.txt, .md, .docx only)
-    const ext = getFileExtension(file.name);
-    const isSupported = SUPPORTED_EXTENSIONS.includes(
-      ext as (typeof SUPPORTED_EXTENSIONS)[number]
-    );
-
-    if (!isSupported) {
+    // 3. Validate Extension & MIME Type (415 Unsupported Media Type)
+    const typeValidation = validateFileType(file.name, file.type);
+    if (!typeValidation.isValid) {
       return NextResponse.json(
         {
-          error: `Unsupported file format "${ext}". Supported types: ${SUPPORTED_EXTENSIONS.join(", ")} (max 2MB).`,
+          error:
+            typeValidation.error ||
+            `Unsupported media type. Supported formats: ${SUPPORTED_EXTENSIONS.join(", ")} (max 2MB).`,
         },
-        { status: 400 }
+        { status: 415 }
       );
     }
 
-    // Convert file to Buffer
+    // Read file buffer
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    // Convert to TipTap JSON structure
-    const { title, content } = await convertUploadedFileToTipTap(
-      file.name,
-      buffer
-    );
+    // 4. Convert file to TipTap JSON AST (400 on unparseable / empty content)
+    let conversionResult;
+    try {
+      conversionResult = await convertUploadedFileToTipTap(file.name, buffer);
+    } catch (parseError) {
+      const msg =
+        parseError instanceof Error
+          ? parseError.message
+          : "Failed to parse file content";
+      return NextResponse.json({ error: msg }, { status: 400 });
+    }
 
-    // Persist as a new editable document owned by the user
+    const { title, content } = conversionResult;
+
+    // 5. Create new editable document in database
     const document = await prisma.document.create({
       data: {
-        title,
+        title: title || "Imported Document",
         content,
         ownerId: user.id,
       },
