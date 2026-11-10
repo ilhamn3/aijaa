@@ -2,9 +2,9 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { JSONContent } from "@tiptap/react";
 import TipTapEditor from "@/components/editor/TipTapEditor";
+import ShareDialog from "@/components/sharing/ShareDialog";
 import { DocumentRole } from "@/lib/access";
 import {
   FileText,
@@ -13,9 +13,10 @@ import {
   Loader2,
   AlertCircle,
   Eye,
-  Edit3,
   Crown,
+  Edit3,
   Save,
+  RotateCcw,
 } from "lucide-react";
 
 interface DocumentData {
@@ -49,7 +50,6 @@ export default function DocumentEditorShell({
   role,
   currentUser,
 }: DocumentEditorShellProps) {
-  const router = useRouter();
   const [title, setTitle] = useState(initialDocument.title);
   const [content, setContent] = useState<JSONContent>(initialDocument.content);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("saved");
@@ -60,15 +60,14 @@ export default function DocumentEditorShell({
   const lastSavedContentRef = useRef<string>(JSON.stringify(initialDocument.content));
   const lastSavedTitleRef = useRef<string>(initialDocument.title);
 
-  // Core save function
+  // Core save routine
   const saveDocument = useCallback(
-    async (newTitle?: string, newContent?: JSONContent) => {
+    async (overrideTitle?: string, overrideContent?: JSONContent) => {
       if (!isEditable) return;
 
-      const titleToSend = newTitle !== undefined ? newTitle : title;
-      const contentToSend = newContent !== undefined ? newContent : content;
+      const titleToSend = overrideTitle !== undefined ? overrideTitle : title;
+      const contentToSend = overrideContent !== undefined ? overrideContent : content;
 
-      // Check if anything actually changed
       const currentContentStr = JSON.stringify(contentToSend);
       if (
         titleToSend === lastSavedTitleRef.current &&
@@ -100,7 +99,7 @@ export default function DocumentEditorShell({
 
         if (!res.ok) {
           setSaveStatus("error");
-          setErrorMessage(data.error || "Failed to save document");
+          setErrorMessage(data.error || "Failed to save changes");
           return;
         }
 
@@ -110,13 +109,13 @@ export default function DocumentEditorShell({
       } catch (err) {
         console.error("Save error:", err);
         setSaveStatus("error");
-        setErrorMessage("Network error while saving");
+        setErrorMessage("Network error: Could not reach the server");
       }
     },
     [initialDocument.id, isEditable, title, content]
   );
 
-  // Handle content changes with debounce
+  // Content change handler with ~1.5s debounced autosave
   const handleContentChange = (newContent: JSONContent) => {
     setContent(newContent);
     if (!isEditable) return;
@@ -129,10 +128,10 @@ export default function DocumentEditorShell({
 
     debounceTimerRef.current = setTimeout(() => {
       saveDocument(undefined, newContent);
-    }, 1000); // 1-second debounce
+    }, 1500); // 1.5 second debounced autosave
   };
 
-  // Handle title blur / enter
+  // Inline title rename handler
   const handleTitleBlur = () => {
     const trimmed = title.trim();
     if (!trimmed) {
@@ -150,7 +149,7 @@ export default function DocumentEditorShell({
     }
   };
 
-  // Keyboard shortcut Ctrl+S / Cmd+S for manual save
+  // Manual save shortcut (Cmd+S / Ctrl+S)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key === "s") {
@@ -168,7 +167,7 @@ export default function DocumentEditorShell({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isEditable, saveDocument]);
 
-  // Clean up timer on unmount
+  // Cleanup on unmount
   useEffect(() => {
     return () => {
       if (debounceTimerRef.current) {
@@ -179,7 +178,7 @@ export default function DocumentEditorShell({
 
   return (
     <div className="flex flex-col h-screen bg-slate-100 overflow-hidden">
-      {/* Top Header Bar */}
+      {/* Top Google Docs-like App Bar */}
       <header className="bg-white border-b border-slate-200 px-4 py-2.5 flex items-center justify-between shrink-0 shadow-xs z-30">
         <div className="flex items-center gap-3 min-w-0">
           <Link
@@ -195,7 +194,7 @@ export default function DocumentEditorShell({
           </div>
 
           <div className="flex flex-col min-w-0">
-            {/* Inline Title Editing */}
+            {/* Inline Title Input */}
             <input
               type="text"
               value={title}
@@ -209,7 +208,7 @@ export default function DocumentEditorShell({
               placeholder="Untitled Document"
             />
 
-            {/* Sub-bar: Save Status & Role Indicator */}
+            {/* Sub-bar: Save Status Indicator */}
             <div className="flex items-center gap-2 text-xs text-slate-500 px-0.5 mt-0.5">
               {role === "view" ? (
                 <span className="flex items-center gap-1 text-slate-600 font-medium">
@@ -220,7 +219,7 @@ export default function DocumentEditorShell({
                 <div className="flex items-center gap-1.5">
                   {saveStatus === "saved" && (
                     <span className="flex items-center gap-1 text-emerald-600 font-medium">
-                      <Check className="w-3.5 h-3.5" />
+                      <Check className="w-3.5 h-3.5 stroke-[2.5]" />
                       <span>Saved</span>
                     </span>
                   )}
@@ -232,7 +231,7 @@ export default function DocumentEditorShell({
                   )}
                   {saveStatus === "unsaved" && (
                     <span className="flex items-center gap-1 text-amber-600 font-medium">
-                      <span className="w-2 h-2 rounded-full bg-amber-500" />
+                      <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
                       <span>Unsaved changes</span>
                     </span>
                   )}
@@ -240,6 +239,13 @@ export default function DocumentEditorShell({
                     <span className="flex items-center gap-1 text-red-600 font-medium">
                       <AlertCircle className="w-3.5 h-3.5" />
                       <span>Save failed</span>
+                      <button
+                        onClick={() => saveDocument()}
+                        className="underline text-red-700 hover:text-red-900 ml-1 font-bold cursor-pointer inline-flex items-center gap-0.5"
+                      >
+                        <RotateCcw className="w-3 h-3" />
+                        <span>Retry</span>
+                      </button>
                     </span>
                   )}
                 </div>
@@ -253,9 +259,9 @@ export default function DocumentEditorShell({
           </div>
         </div>
 
-        {/* Header Right Actions */}
+        {/* Right Action Controls */}
         <div className="flex items-center gap-2.5">
-          {/* Role Badge */}
+          {/* Role Status Badge */}
           <div className="hidden sm:flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium border">
             {role === "owner" && (
               <span className="flex items-center gap-1 text-blue-700 bg-blue-50 border-blue-200">
@@ -277,22 +283,30 @@ export default function DocumentEditorShell({
             )}
           </div>
 
-          {/* Manual Save Button for Editors */}
+          {/* Manual Save Button */}
           {isEditable && (
             <button
               onClick={() => saveDocument()}
               disabled={saveStatus === "saving"}
               className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium rounded-lg border border-slate-200 transition-colors cursor-pointer disabled:opacity-50"
-              title="Save now (Ctrl+S)"
+              title="Manual save (Ctrl+S)"
             >
               <Save className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Save</span>
             </button>
           )}
 
-          {/* User Avatar */}
+          {/* Share Dialog Trigger */}
+          <ShareDialog
+            documentId={initialDocument.id}
+            documentTitle={title}
+            owner={initialDocument.owner}
+            isOwner={role === "owner"}
+          />
+
+          {/* Current User Badge */}
           <div
-            className="w-8 h-8 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-xs font-bold border border-blue-200"
+            className="w-8 h-8 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center text-xs font-bold border border-blue-200 shrink-0"
             title={`Signed in as ${currentUser.name} (${currentUser.email})`}
           >
             {currentUser.name.charAt(0)}
@@ -300,23 +314,31 @@ export default function DocumentEditorShell({
         </div>
       </header>
 
-      {/* Error Notification Banner */}
+      {/* Save Error Alert Banner */}
       {errorMessage && (
-        <div className="bg-red-50 border-b border-red-200 px-4 py-2 text-xs text-red-700 flex items-center justify-between">
+        <div className="bg-red-50 border-b border-red-200 px-4 py-2 text-xs text-red-700 flex items-center justify-between z-20">
           <div className="flex items-center gap-2">
             <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
-            <span>{errorMessage}</span>
+            <span>{errorMessage}. Your unsaved changes are kept locally in the editor.</span>
           </div>
-          <button
-            onClick={() => setErrorMessage(null)}
-            className="text-red-500 hover:text-red-700 font-bold"
-          >
-            ✕
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => saveDocument()}
+              className="font-bold underline hover:text-red-900 cursor-pointer"
+            >
+              Retry Save
+            </button>
+            <button
+              onClick={() => setErrorMessage(null)}
+              className="text-red-500 hover:text-red-700 font-bold cursor-pointer"
+            >
+              ✕
+            </button>
+          </div>
         </div>
       )}
 
-      {/* TipTap Editor Viewport */}
+      {/* TipTap Rich Text Editor */}
       <TipTapEditor
         content={content}
         editable={isEditable}

@@ -40,7 +40,7 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
 
     const role = getDocumentRole(user.id, doc, doc.shares);
     if (!role) {
-      return NextResponse.json({ error: "Document not found or access denied" }, { status: 404 });
+      return NextResponse.json({ error: "Document not found" }, { status: 404 });
     }
 
     return NextResponse.json({
@@ -80,7 +80,7 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
 
     // Enforce role authorization
     if (!role) {
-      return NextResponse.json({ error: "Document not found or access denied" }, { status: 404 });
+      return NextResponse.json({ error: "Document not found" }, { status: 404 });
     }
 
     if (role === "view") {
@@ -163,6 +163,10 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
 
     const role = getDocumentRole(user.id, doc, doc.shares);
 
+    if (!role) {
+      return NextResponse.json({ error: "Document not found" }, { status: 404 });
+    }
+
     // Only owner can delete the document
     if (role !== "owner") {
       return NextResponse.json(
@@ -184,3 +188,4 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
     );
   }
 }
+

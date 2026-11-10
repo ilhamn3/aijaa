@@ -35,8 +35,8 @@ export default async function DocumentPage({ params }: DocumentPageProps) {
   const role = getDocumentRole(user.id, doc, doc.shares);
 
   if (!role) {
-    // User does not have access to this document
-    redirect("/dashboard");
+    // User does not have access to this document -> 404 (do not reveal document exists)
+    notFound();
   }
 
   return (
@@ -47,3 +47,4 @@ export default async function DocumentPage({ params }: DocumentPageProps) {
     />
   );
 }
+

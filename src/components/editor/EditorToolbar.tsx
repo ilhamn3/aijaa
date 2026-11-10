@@ -144,3 +144,4 @@ export default function EditorToolbar({ editor, disabled }: EditorToolbarProps) 
     </div>
   );
 }
+
