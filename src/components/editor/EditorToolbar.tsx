@@ -26,12 +26,16 @@ export default function EditorToolbar({ editor, disabled }: EditorToolbarProps) 
   }
 
   const buttonClass = (isActive: boolean) =>
-    `p-1.5 rounded transition-colors text-slate-700 hover:bg-slate-200 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed ${
+    `p-1.5 rounded transition-colors text-slate-700 hover:bg-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed ${
       isActive ? "bg-slate-200 text-blue-700 font-semibold" : ""
     }`;
 
   return (
-    <div className="flex flex-wrap items-center gap-1 px-3 py-1.5 bg-slate-100/90 border-b border-slate-200 sticky top-0 z-20 backdrop-blur-xs select-none">
+    <div
+      role="toolbar"
+      aria-label="Editor formatting toolbar"
+      className="flex flex-wrap items-center gap-1 px-3 py-1.5 bg-slate-100/90 border-b border-slate-200 sticky top-0 z-20 backdrop-blur-xs select-none"
+    >
       {/* History */}
       <button
         type="button"
@@ -39,6 +43,7 @@ export default function EditorToolbar({ editor, disabled }: EditorToolbarProps) 
         disabled={!editor.can().undo()}
         className={buttonClass(false)}
         title="Undo (Ctrl+Z)"
+        aria-label="Undo"
       >
         <Undo2 className="w-4 h-4" />
       </button>
@@ -48,11 +53,12 @@ export default function EditorToolbar({ editor, disabled }: EditorToolbarProps) 
         disabled={!editor.can().redo()}
         className={buttonClass(false)}
         title="Redo (Ctrl+Y)"
+        aria-label="Redo"
       >
         <Redo2 className="w-4 h-4" />
       </button>
 
-      <div className="w-[1px] h-5 bg-slate-300 mx-1" />
+      <div className="w-[1px] h-5 bg-slate-300 mx-1" aria-hidden="true" />
 
       {/* Headings & Paragraph */}
       <button
@@ -60,6 +66,7 @@ export default function EditorToolbar({ editor, disabled }: EditorToolbarProps) 
         onClick={() => editor.chain().focus().setParagraph().run()}
         className={buttonClass(editor.isActive("paragraph"))}
         title="Normal text"
+        aria-label="Normal text paragraph"
       >
         <Pilcrow className="w-4 h-4" />
       </button>
@@ -69,6 +76,7 @@ export default function EditorToolbar({ editor, disabled }: EditorToolbarProps) 
         onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
         className={buttonClass(editor.isActive("heading", { level: 1 }))}
         title="Heading 1"
+        aria-label="Heading 1"
       >
         <Heading1 className="w-4 h-4" />
       </button>
@@ -78,6 +86,7 @@ export default function EditorToolbar({ editor, disabled }: EditorToolbarProps) 
         onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
         className={buttonClass(editor.isActive("heading", { level: 2 }))}
         title="Heading 2"
+        aria-label="Heading 2"
       >
         <Heading2 className="w-4 h-4" />
       </button>
@@ -87,11 +96,12 @@ export default function EditorToolbar({ editor, disabled }: EditorToolbarProps) 
         onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
         className={buttonClass(editor.isActive("heading", { level: 3 }))}
         title="Heading 3"
+        aria-label="Heading 3"
       >
         <Heading3 className="w-4 h-4" />
       </button>
 
-      <div className="w-[1px] h-5 bg-slate-300 mx-1" />
+      <div className="w-[1px] h-5 bg-slate-300 mx-1" aria-hidden="true" />
 
       {/* Inline Formatting */}
       <button
@@ -99,6 +109,7 @@ export default function EditorToolbar({ editor, disabled }: EditorToolbarProps) 
         onClick={() => editor.chain().focus().toggleBold().run()}
         className={buttonClass(editor.isActive("bold"))}
         title="Bold (Ctrl+B)"
+        aria-label="Bold (Ctrl+B)"
       >
         <Bold className="w-4 h-4" />
       </button>
@@ -108,6 +119,7 @@ export default function EditorToolbar({ editor, disabled }: EditorToolbarProps) 
         onClick={() => editor.chain().focus().toggleItalic().run()}
         className={buttonClass(editor.isActive("italic"))}
         title="Italic (Ctrl+I)"
+        aria-label="Italic (Ctrl+I)"
       >
         <Italic className="w-4 h-4" />
       </button>
@@ -117,11 +129,12 @@ export default function EditorToolbar({ editor, disabled }: EditorToolbarProps) 
         onClick={() => editor.chain().focus().toggleUnderline().run()}
         className={buttonClass(editor.isActive("underline"))}
         title="Underline (Ctrl+U)"
+        aria-label="Underline (Ctrl+U)"
       >
         <UnderlineIcon className="w-4 h-4" />
       </button>
 
-      <div className="w-[1px] h-5 bg-slate-300 mx-1" />
+      <div className="w-[1px] h-5 bg-slate-300 mx-1" aria-hidden="true" />
 
       {/* Lists */}
       <button
@@ -129,6 +142,7 @@ export default function EditorToolbar({ editor, disabled }: EditorToolbarProps) 
         onClick={() => editor.chain().focus().toggleBulletList().run()}
         className={buttonClass(editor.isActive("bulletList"))}
         title="Bullet list"
+        aria-label="Bullet list"
       >
         <List className="w-4 h-4" />
       </button>
@@ -138,10 +152,10 @@ export default function EditorToolbar({ editor, disabled }: EditorToolbarProps) 
         onClick={() => editor.chain().focus().toggleOrderedList().run()}
         className={buttonClass(editor.isActive("orderedList"))}
         title="Numbered list"
+        aria-label="Numbered list"
       >
         <ListOrdered className="w-4 h-4" />
       </button>
     </div>
   );
 }
-

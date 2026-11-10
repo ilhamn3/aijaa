@@ -5,7 +5,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { getDocumentRole } from "@/lib/access";
 
 const createDocSchema = z.object({
-  title: z.string().trim().min(1).max(255).optional(),
+  title: z.string().trim().max(120, "Title cannot exceed 120 characters").optional(),
 });
 
 export async function GET() {

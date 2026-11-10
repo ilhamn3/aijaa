@@ -6,6 +6,7 @@ import { JSONContent } from "@tiptap/react";
 import TipTapEditor from "@/components/editor/TipTapEditor";
 import ShareDialog from "@/components/sharing/ShareDialog";
 import { DocumentRole } from "@/lib/access";
+import { tipTapToMarkdown } from "@/lib/exportMarkdown";
 import {
   FileText,
   ArrowLeft,
@@ -17,6 +18,7 @@ import {
   Edit3,
   Save,
   RotateCcw,
+  Download,
 } from "lucide-react";
 
 interface DocumentData {
@@ -131,11 +133,12 @@ export default function DocumentEditorShell({
     }, 1500); // 1.5 second debounced autosave
   };
 
-  // Inline title rename handler
+  // Inline title rename handler (limits to 120 chars, falls back to "Untitled")
   const handleTitleBlur = () => {
     const trimmed = title.trim();
     if (!trimmed) {
-      setTitle(lastSavedTitleRef.current || "Untitled Document");
+      setTitle("Untitled");
+      saveDocument("Untitled", undefined);
       return;
     }
     if (trimmed !== lastSavedTitleRef.current) {
@@ -147,6 +150,17 @@ export default function DocumentEditorShell({
     if (e.key === "Enter") {
       e.currentTarget.blur();
     }
+  };
+
+  const handleExportMarkdown = () => {
+    const markdown = tipTapToMarkdown(content);
+    const blob = new Blob([markdown], { type: "text/markdown;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${title.trim() || "document"}.md`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   // Manual save shortcut (Cmd+S / Ctrl+S)
@@ -194,18 +208,20 @@ export default function DocumentEditorShell({
           </div>
 
           <div className="flex flex-col min-w-0">
-            {/* Inline Title Input */}
+            {/* Inline Title Input (max 120 chars) */}
             <input
               type="text"
               value={title}
               disabled={!isEditable}
+              maxLength={120}
+              aria-label="Document Title"
               onChange={(e) => setTitle(e.target.value)}
               onBlur={handleTitleBlur}
               onKeyDown={handleTitleKeyDown}
               className={`font-semibold text-slate-800 text-sm sm:text-base px-1.5 py-0.5 rounded -ml-1 border border-transparent hover:border-slate-300 focus:border-blue-500 focus:bg-white focus:outline-none transition-colors truncate max-w-xs sm:max-w-md ${
                 !isEditable ? "cursor-default hover:border-transparent" : ""
               }`}
-              placeholder="Untitled Document"
+              placeholder="Untitled"
             />
 
             {/* Sub-bar: Save Status Indicator */}
@@ -295,6 +311,17 @@ export default function DocumentEditorShell({
               <span className="hidden sm:inline">Save</span>
             </button>
           )}
+
+          {/* Export to Markdown Button */}
+          <button
+            onClick={handleExportMarkdown}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium rounded-lg border border-slate-200 transition-colors cursor-pointer"
+            title="Export as Markdown (.md)"
+            aria-label="Export document as Markdown"
+          >
+            <Download className="w-3.5 h-3.5 text-slate-500" />
+            <span className="hidden md:inline">Export .md</span>
+          </button>
 
           {/* Share Dialog Trigger */}
           <ShareDialog

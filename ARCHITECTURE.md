@@ -113,3 +113,4 @@ To respect the 4–6 hour timebox and deliver a working, high-quality, fully tes
    - Leverage PostgreSQL's native `tsvector` and GIN indexing to provide instant keyword search across document titles and contents in the dashboard.
 4. **Live Collaborator Presence Indicators:**
    - Lightweight presence pings via Server-Sent Events (SSE) showing avatar badges of users currently viewing or editing the document.
+

@@ -107,3 +107,4 @@ npm test
 - **`README.md`:** Comprehensive setup, environment variables, seeding, local running, testing, and Vercel deployment guide.
 - **`ARCHITECTURE.md`:** Deep-dive into technical trade-offs, pure authorization design, deliberate scope cuts, and future 2–4 hour roadmap.
 - **`AI_LOG.md`:** Chronological record of all architectural decisions, alternatives evaluated, and bugs resolved throughout the build.
+

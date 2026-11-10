@@ -112,3 +112,4 @@ function renderInlineContent(content?: JSONContent[]): string {
     })
     .join("");
 }
+

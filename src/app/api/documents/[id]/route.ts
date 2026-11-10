@@ -5,7 +5,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { getDocumentRole } from "@/lib/access";
 
 const updateDocSchema = z.object({
-  title: z.string().trim().min(1, "Title cannot be empty").max(255).optional(),
+  title: z.string().trim().max(120, "Title cannot exceed 120 characters").optional(),
   content: z.record(z.string(), z.any()).optional(),
 });
 
@@ -114,10 +114,13 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
       );
     }
 
+    const sanitizedTitle =
+      title !== undefined ? (title.trim() || "Untitled") : undefined;
+
     const updatedDoc = await prisma.document.update({
       where: { id },
       data: {
-        ...(title !== undefined ? { title } : {}),
+        ...(sanitizedTitle !== undefined ? { title: sanitizedTitle } : {}),
         ...(content !== undefined ? { content } : {}),
       },
       include: {
