@@ -52,3 +52,18 @@ export function getDocumentRole(
   return null;
 }
 
+/**
+ * Pure authorization check for write/save permissions.
+ * Only owner and editors with active EDIT shares can modify document content/title.
+ */
+export function canEditDocument(role: DocumentRole): boolean {
+  return role === "owner" || role === "edit";
+}
+
+/**
+ * Pure authorization check for deletion.
+ * Only the document owner can delete a document.
+ */
+export function canDeleteDocument(role: DocumentRole): boolean {
+  return role === "owner";
+}

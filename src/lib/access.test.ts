@@ -1,5 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { getDocumentRole } from "./access";
+import {
+  getDocumentRole,
+  canEditDocument,
+  canDeleteDocument,
+} from "./access";
 
 describe("getDocumentRole", () => {
   const ownerId = "user_alice";
@@ -41,7 +45,6 @@ describe("getDocumentRole", () => {
   });
 
   it("returns null when share has been revoked (removed from shares list)", () => {
-    // When a share is revoked, it is deleted from the database
     const sharesBeforeRevocation = [
       { userId: "user_bob", permission: "EDIT" },
       { userId: "user_carol", permission: "VIEW" },
@@ -64,3 +67,40 @@ describe("getDocumentRole", () => {
   });
 });
 
+describe("Authorization Helpers", () => {
+  describe("canEditDocument", () => {
+    it("allows document owner to edit/save", () => {
+      expect(canEditDocument("owner")).toBe(true);
+    });
+
+    it("allows shared editor (EDIT permission) to edit/save", () => {
+      expect(canEditDocument("edit")).toBe(true);
+    });
+
+    it("forbids view-only user from editing/saving (403 forbidden path)", () => {
+      expect(canEditDocument("view")).toBe(false);
+    });
+
+    it("forbids unauthenticated / no-access user from editing/saving", () => {
+      expect(canEditDocument(null)).toBe(false);
+    });
+  });
+
+  describe("canDeleteDocument", () => {
+    it("allows document owner to delete", () => {
+      expect(canDeleteDocument("owner")).toBe(true);
+    });
+
+    it("forbids shared editor from deleting", () => {
+      expect(canDeleteDocument("edit")).toBe(false);
+    });
+
+    it("forbids view-only user from deleting", () => {
+      expect(canDeleteDocument("view")).toBe(false);
+    });
+
+    it("forbids unauthenticated / no-access user from deleting", () => {
+      expect(canDeleteDocument(null)).toBe(false);
+    });
+  });
+});
