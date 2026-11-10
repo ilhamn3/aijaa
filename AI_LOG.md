@@ -52,6 +52,7 @@
   - `GET /api/documents/[id]`: Derives user via `getCurrentUser()` and enforces access via pure function `getDocumentRole(userId, doc, shares)`.
   - `PATCH /api/documents/[id]`: Updates title or content. Validates input via Zod. Strictly rejects view-only users with 403 Forbidden (`{ error: "Forbidden: You have view-only permissions for this document" }`).
   - `DELETE /api/documents/[id]`: Strictly restricts deletion to document owner (`role === "owner"`). Shared editors and viewers receive 403.
+- **Next.js 16 Async Route Params:** Addressed asynchronous `params` resolution in all dynamic handlers (`const { id } = await params`).
 
 ### 2. TipTap Editor Integration
 - **SSR Hydration Defense:** Initialized TipTap with `immediatelyRender: false` in `src/components/editor/TipTapEditor.tsx`, eliminating Next.js SSR hydration mismatches.
@@ -61,20 +62,41 @@
 
 ### 3. Autosave & Save Status UX
 - **Debounced Autosave:** Keystrokes trigger a 1.5-second (1500ms) debounced autosave.
-- **Save Failure Resilience:** Added immediate "Retry" button on save failure banners, preserving unsaved local editor content so user work is never lost.
-- **Async Route Params:** Handled Next.js 16 async route params (`const { id } = await params`) across all dynamic API routes and page components.
-- **404 Concealment:** Ensured unauthorized users receiving no access get a clean 404 response without revealing document existence.
 - **Redundant Network Call Prevention:** Changes are compared against `lastSavedContentRef` and `lastSavedTitleRef`. If no actual mutation occurred, no network request is fired.
+- **Save Failure Resilience:** Added immediate "Retry" button on save failure banners, preserving unsaved local editor content so user work is never lost.
 - **Manual Save:** Added manual "Save" button and keyboard shortcut (`Cmd+S` / `Ctrl+S`).
 - **Live Status Indicator:** Visible header indicator reflecting `"Saving..."` (spinner), `"Saved"` (emerald checkmark), `"Unsaved changes"` (amber indicator), and `"View only"` for read-only access.
 - **Inline Title Renaming:** Title is an editable input that automatically commits on blur or Enter key.
 
-### 4. Database & Migration
-- Applied first migration `20261110043602_init` directly against Neon PostgreSQL using unpooled `DIRECT_URL`.
-- Seeded database via `npm run seed`: Alice, Bob, Carol and sample document with Bob (EDIT) and Carol (VIEW).
-- Verified `.env` is ignored by git (`!.env.example` committed) and confirmed `.env.local` does not exist.
+---
 
-### 5. Authorization Unit Tests
-- Extended `src/lib/access.test.ts` to 15 unit tests:
-  - Owner resolution, edit share, view share, revoked share, no-access, null/undefined safety.
-  - Authorization helper tests: `canEditDocument` (owner/edit allowed, view/null forbidden), `canDeleteDocument` (only owner allowed).
+## Phase 3: Sharing, Permissions & Access Control
+
+### 1. Sharing API Endpoints
+- **`GET /api/documents/[id]/shares`:** Owner only. Returns list of collaborators with their assigned permissions and owner details. Non-owners receive **403 Forbidden**.
+- **`POST /api/documents/[id]/shares`:** Owner only.
+  - Validates email and permission (`VIEW` | `EDIT`) with Zod.
+  - Checks if user exists in the database; returns a clear 404 message (`No user with that email found`) if not found.
+  - Prevents owners from sharing with themselves (`400 Bad Request`).
+  - Upserts share on `documentId_userId` compound unique key, seamlessly updating permission if the user is already shared.
+- **`PATCH /api/documents/[id]/shares/[shareId]` & `/shares`:** Owner only. Allows changing permissions between `VIEW` and `EDIT`.
+- **`DELETE /api/documents/[id]/shares/[shareId]` & `/shares`:** Owner only. Revokes access by deleting the `DocumentShare` record.
+
+### 2. Immediate Revocation & Read-Only Enforcement
+- **Immediate Revocation:** Once an owner revokes a user's share, the subsequent request from that user drops to `role === null`, returning **404** (concealing document existence) or **403**.
+- **View-Only Enforcement:**
+  - **Server-Side:** `PATCH /api/documents/[id]` verifies `role === "view"` and rejects with **403 Forbidden**.
+  - **Client-Side:** Viewers see a prominent amber "View only" banner at the top of the canvas, toolbar is suppressed, and `editable: false` is enforced on TipTap.
+
+### 3. Share Dialog Modal (`src/components/sharing/ShareDialog.tsx`)
+- Displayed exclusively for document owners.
+- Features quick-selector pills for seeded users (Alice, Bob, Carol) excluding the document owner.
+- Displays full list of collaborators with an inline permission dropdown selector and a revoke button.
+- Handles success notifications, error alerts, and loading spinners.
+
+### 4. Tests
+- Extended test suite to 24 tests in `src/lib/access.test.ts` and `src/lib/sharing.test.ts`:
+  - `canManageShares`: Confirms only owners can manage shares, while editors, viewers, and strangers get 403/false.
+  - Permission transitions: Verifies immediate role transitions when changing `VIEW` to `EDIT` and vice versa.
+  - Immediate revocation: Verifies that deleting a share immediately removes all edit and read access on subsequent queries.
+  - Self-sharing prevention rule validation.

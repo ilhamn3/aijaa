@@ -10,8 +10,6 @@ import {
   ShieldAlert,
   Check,
   Crown,
-  Edit3,
-  Eye,
 } from "lucide-react";
 
 interface ShareUser {
@@ -50,6 +48,7 @@ export default function ShareDialog({
   const [shares, setShares] = useState<ShareItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [sharing, setSharing] = useState(false);
+  const [updatingShareId, setUpdatingShareId] = useState<string | null>(null);
   const [revokingId, setRevokingId] = useState<string | null>(null);
 
   // Form state
@@ -59,6 +58,7 @@ export default function ShareDialog({
   const [success, setSuccess] = useState<string | null>(null);
 
   const fetchShares = async () => {
+    if (!isOwner) return;
     setLoading(true);
     try {
       const res = await fetch(`/api/documents/${documentId}/shares`);
@@ -107,13 +107,44 @@ export default function ShareDialog({
         return;
       }
 
-      setSuccess(`Shared with ${targetEmail} as ${permission === "EDIT" ? "Editor" : "Viewer"}`);
+      setSuccess(
+        `Access granted to ${targetEmail} (${permission === "EDIT" ? "Can edit" : "View only"})`
+      );
       setTargetEmail("");
       fetchShares();
     } catch {
       setError("Network error while sharing");
     } finally {
       setSharing(false);
+    }
+  };
+
+  const handlePermissionChange = async (shareId: string, newPermission: "EDIT" | "VIEW") => {
+    setUpdatingShareId(shareId);
+    setError(null);
+    setSuccess(null);
+
+    try {
+      const res = await fetch(`/api/documents/${documentId}/shares/${shareId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ permission: newPermission }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || "Failed to update permission");
+      } else {
+        setSuccess("Permission updated successfully");
+        setShares((prev) =>
+          prev.map((s) => (s.id === shareId ? { ...s, permission: newPermission } : s))
+        );
+      }
+    } catch {
+      setError("Network error while updating permission");
+    } finally {
+      setUpdatingShareId(null);
     }
   };
 
@@ -144,6 +175,11 @@ export default function ShareDialog({
     }
   };
 
+  // Only show Share button for owners
+  if (!isOwner) {
+    return null;
+  }
+
   // Filter candidates to exclude owner
   const availableCandidates = SEEDED_CANDIDATES.filter(
     (c) => c.email.toLowerCase() !== owner.email.toLowerCase()
@@ -151,11 +187,11 @@ export default function ShareDialog({
 
   return (
     <>
-      {/* Trigger Button */}
+      {/* Trigger Button (Owner Only) */}
       <button
         onClick={() => setIsOpen(true)}
-        className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-lg shadow-2xs transition-colors cursor-pointer"
-        title="Share document"
+        className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg shadow-xs transition-colors cursor-pointer"
+        title="Share document settings"
       >
         <Users className="w-3.5 h-3.5" />
         <span>Share</span>
@@ -204,72 +240,66 @@ export default function ShareDialog({
                 </div>
               )}
 
-              {/* Share with Form (Owner only) */}
-              {isOwner ? (
-                <form onSubmit={handleShare} className="space-y-3">
-                  <label className="block text-xs font-semibold text-slate-700">
-                    Add collaborator by email
-                  </label>
+              {/* Share Form */}
+              <form onSubmit={handleShare} className="space-y-3">
+                <label className="block text-xs font-semibold text-slate-700">
+                  Add collaborator by email
+                </label>
 
-                  {/* Seeded shortcut suggestions */}
-                  <div className="flex flex-wrap gap-1.5 mb-1">
-                    <span className="text-[11px] text-slate-400 self-center mr-1">
-                      Quick select:
-                    </span>
-                    {availableCandidates.map((c) => (
-                      <button
-                        key={c.email}
-                        type="button"
-                        onClick={() => setTargetEmail(c.email)}
-                        className={`text-[11px] px-2 py-0.5 rounded-full border transition-colors cursor-pointer ${
-                          targetEmail === c.email
-                            ? "bg-blue-50 border-blue-400 text-blue-700 font-medium"
-                            : "bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-600"
-                        }`}
-                      >
-                        {c.name.split(" ")[0]} ({c.email})
-                      </button>
-                    ))}
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="email"
-                      value={targetEmail}
-                      onChange={(e) => setTargetEmail(e.target.value)}
-                      placeholder="colleague@example.com"
-                      required
-                      className="flex-1 text-sm bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-
-                    <select
-                      value={permission}
-                      onChange={(e) => setPermission(e.target.value as "EDIT" | "VIEW")}
-                      className="text-xs bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-2.5 text-slate-800 font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
-                    >
-                      <option value="EDIT">Can edit</option>
-                      <option value="VIEW">View only</option>
-                    </select>
-
+                {/* Seeded shortcut suggestions */}
+                <div className="flex flex-wrap gap-1.5 mb-1">
+                  <span className="text-[11px] text-slate-400 self-center mr-1">
+                    Quick suggestions:
+                  </span>
+                  {availableCandidates.map((c) => (
                     <button
-                      type="submit"
-                      disabled={sharing || !targetEmail.trim()}
-                      className="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white font-medium text-xs px-3.5 py-2.5 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
+                      key={c.email}
+                      type="button"
+                      onClick={() => setTargetEmail(c.email)}
+                      className={`text-[11px] px-2 py-0.5 rounded-full border transition-colors cursor-pointer ${
+                        targetEmail === c.email
+                          ? "bg-blue-50 border-blue-400 text-blue-700 font-medium"
+                          : "bg-slate-100 hover:bg-slate-200 border-slate-200 text-slate-600"
+                      }`}
                     >
-                      {sharing ? (
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      ) : (
-                        <UserPlus className="w-3.5 h-3.5" />
-                      )}
-                      <span>Share</span>
+                      {c.name.split(" ")[0]} ({c.email})
                     </button>
-                  </div>
-                </form>
-              ) : (
-                <div className="p-3 bg-slate-50 rounded-lg border border-slate-200 text-xs text-slate-600">
-                  Only the document owner can share or modify collaborator access.
+                  ))}
                 </div>
-              )}
+
+                <div className="flex items-center gap-2">
+                  <input
+                    type="email"
+                    value={targetEmail}
+                    onChange={(e) => setTargetEmail(e.target.value)}
+                    placeholder="colleague@example.com"
+                    required
+                    className="flex-1 text-sm bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-slate-900 placeholder-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+
+                  <select
+                    value={permission}
+                    onChange={(e) => setPermission(e.target.value as "EDIT" | "VIEW")}
+                    className="text-xs bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-2.5 text-slate-800 font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                  >
+                    <option value="EDIT">Can edit</option>
+                    <option value="VIEW">View only</option>
+                  </select>
+
+                  <button
+                    type="submit"
+                    disabled={sharing || !targetEmail.trim()}
+                    className="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white font-medium text-xs px-3.5 py-2.5 rounded-lg transition-colors cursor-pointer disabled:opacity-50"
+                  >
+                    {sharing ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <UserPlus className="w-3.5 h-3.5" />
+                    )}
+                    <span>Share</span>
+                  </button>
+                </div>
+              </form>
 
               {/* People with Access Section */}
               <div>
@@ -286,7 +316,7 @@ export default function ShareDialog({
                       </div>
                       <div className="min-w-0 text-xs">
                         <p className="font-semibold text-slate-800 truncate">
-                          {owner.name}
+                          {owner.name} (You)
                         </p>
                         <p className="text-slate-400 truncate">{owner.email}</p>
                       </div>
@@ -297,7 +327,7 @@ export default function ShareDialog({
                     </span>
                   </div>
 
-                  {/* Active Shares */}
+                  {/* Active Collaborators */}
                   {loading ? (
                     <div className="p-4 text-center text-xs text-slate-400 flex items-center justify-center gap-2">
                       <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -328,34 +358,37 @@ export default function ShareDialog({
                         </div>
 
                         <div className="flex items-center gap-2 shrink-0">
-                          {share.permission === "EDIT" ? (
-                            <span className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md">
-                              <Edit3 className="w-3 h-3 text-emerald-600" />
-                              <span>Can edit</span>
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-1 text-[11px] font-medium text-slate-600 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-md">
-                              <Eye className="w-3 h-3 text-slate-500" />
-                              <span>View only</span>
-                            </span>
-                          )}
+                          {/* Change Permission Dropdown */}
+                          <select
+                            value={share.permission}
+                            disabled={updatingShareId === share.id}
+                            onChange={(e) =>
+                              handlePermissionChange(
+                                share.id,
+                                e.target.value as "EDIT" | "VIEW"
+                              )
+                            }
+                            className="text-xs bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-md px-2 py-1 text-slate-700 font-medium focus:outline-none focus:ring-1 focus:ring-blue-500 cursor-pointer disabled:opacity-50"
+                          >
+                            <option value="EDIT">Can edit</option>
+                            <option value="VIEW">View only</option>
+                          </select>
 
-                          {isOwner && (
-                            <button
-                              onClick={() =>
-                                handleRevoke(share.id, share.user.name)
-                              }
-                              disabled={revokingId === share.id}
-                              className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors cursor-pointer"
-                              title="Revoke access"
-                            >
-                              {revokingId === share.id ? (
-                                <Loader2 className="w-3.5 h-3.5 animate-spin text-red-600" />
-                              ) : (
-                                <Trash2 className="w-3.5 h-3.5" />
-                              )}
-                            </button>
-                          )}
+                          {/* Revoke Button */}
+                          <button
+                            onClick={() =>
+                              handleRevoke(share.id, share.user.name)
+                            }
+                            disabled={revokingId === share.id}
+                            className="p-1 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors cursor-pointer"
+                            title="Revoke access"
+                          >
+                            {revokingId === share.id ? (
+                              <Loader2 className="w-3.5 h-3.5 animate-spin text-red-600" />
+                            ) : (
+                              <Trash2 className="w-3.5 h-3.5" />
+                            )}
+                          </button>
                         </div>
                       </div>
                     ))

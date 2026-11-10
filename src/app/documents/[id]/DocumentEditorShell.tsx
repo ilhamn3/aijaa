@@ -338,6 +338,18 @@ export default function DocumentEditorShell({
         </div>
       )}
 
+      {/* View-Only Mode Banner */}
+      {role === "view" && (
+        <div className="bg-amber-50/90 border-b border-amber-200/80 px-4 py-2 text-xs text-amber-800 flex items-center justify-between z-20">
+          <div className="flex items-center gap-2 font-medium">
+            <Eye className="w-4 h-4 text-amber-600 shrink-0" />
+            <span>
+              <strong>View-only mode:</strong> You do not have permission to edit this document. Contact <strong>{initialDocument.owner.name}</strong> to request edit access.
+            </span>
+          </div>
+        </div>
+      )}
+
       {/* TipTap Rich Text Editor */}
       <TipTapEditor
         content={content}

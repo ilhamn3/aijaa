@@ -67,3 +67,11 @@ export function canEditDocument(role: DocumentRole): boolean {
 export function canDeleteDocument(role: DocumentRole): boolean {
   return role === "owner";
 }
+
+/**
+ * Pure authorization check for sharing management.
+ * Only the document owner can invite collaborators, modify permissions, or revoke shares.
+ */
+export function canManageShares(role: DocumentRole): boolean {
+  return role === "owner";
+}
