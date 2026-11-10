@@ -60,7 +60,10 @@
 - **Read-Only Mode:** When `role === "view"`, `editable: false` is passed to the editor, disabling keystroke modifications and suppressing the editing toolbar.
 
 ### 3. Autosave & Save Status UX
-- **Debounced Autosave:** Keystrokes trigger a 1000ms debounced autosave.
+- **Debounced Autosave:** Keystrokes trigger a 1.5-second (1500ms) debounced autosave.
+- **Save Failure Resilience:** Added immediate "Retry" button on save failure banners, preserving unsaved local editor content so user work is never lost.
+- **Async Route Params:** Handled Next.js 16 async route params (`const { id } = await params`) across all dynamic API routes and page components.
+- **404 Concealment:** Ensured unauthorized users receiving no access get a clean 404 response without revealing document existence.
 - **Redundant Network Call Prevention:** Changes are compared against `lastSavedContentRef` and `lastSavedTitleRef`. If no actual mutation occurred, no network request is fired.
 - **Manual Save:** Added manual "Save" button and keyboard shortcut (`Cmd+S` / `Ctrl+S`).
 - **Live Status Indicator:** Visible header indicator reflecting `"Saving..."` (spinner), `"Saved"` (emerald checkmark), `"Unsaved changes"` (amber indicator), and `"View only"` for read-only access.
