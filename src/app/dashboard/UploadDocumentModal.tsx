@@ -103,7 +103,7 @@ export default function UploadDocumentModal() {
 
   return (
     <>
-      <div className="flex flex-col items-start">
+      <div className="flex flex-col items-center">
         <button
           onClick={() => {
             setIsOpen(true);
@@ -116,7 +116,7 @@ export default function UploadDocumentModal() {
           <Upload className="w-4 h-4 text-slate-500" />
           <span>Upload file</span>
         </button>
-        <span className="text-[10px] text-slate-400 mt-1 pl-1 hidden sm:inline">
+        <span className="text-[10px] text-slate-400 mt-1 hidden sm:inline text-center">
           .txt, .md, .docx • max 2MB
         </span>
       </div>

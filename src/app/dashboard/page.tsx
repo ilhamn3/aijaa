@@ -95,7 +95,7 @@ export default async function DashboardPage() {
               Create, edit, and share documents.
             </p>
           </div>
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-start gap-2.5">
             <UploadDocumentModal />
             <NewDocumentButton />
           </div>

@@ -35,7 +35,7 @@ export default function NewDocumentButton() {
     <button
       onClick={handleCreate}
       disabled={loading}
-      className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm px-4 py-2.5 rounded-xl shadow-xs transition-colors cursor-pointer disabled:opacity-60"
+      className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm px-4 py-2.5 rounded-xl border border-transparent shadow-xs transition-colors cursor-pointer disabled:opacity-60"
     >
       {loading ? (
         <>
