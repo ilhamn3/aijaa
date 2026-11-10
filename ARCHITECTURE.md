@@ -105,8 +105,10 @@ To respect the 4–6 hour timebox and deliver a working, high-quality, fully tes
 
 ## 6. What I'd Build Next With 2–4 More Hours
 
-1. **Document Export Engine:**
-   - Export TipTap document AST to clean Markdown (`.md`), HTML, and formatted PDF using `@tiptap/html` and headless rendering.
+*(Note: The optional stretch feature—Export to Markdown `.md`—was implemented during Phase 5 via `src/lib/exportMarkdown.ts`).*
+
+1. **PDF & Clean HTML Export:**
+   - Expand the export engine to generate paginated PDF and standalone styled HTML using headless Chromium or `@react-pdf/renderer`.
 2. **Version History & Rollback:**
    - Add a `DocumentVersion` model recording periodic snapshot diffs with the ability for owners to preview and restore previous versions.
 3. **Full-Text Document Search:**

@@ -1,7 +1,6 @@
 import { generateJSON } from "@tiptap/html";
 import type { JSONContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import Underline from "@tiptap/extension-underline";
 import { marked } from "marked";
 import mammoth from "mammoth";
 

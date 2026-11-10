@@ -130,26 +130,39 @@
 
 ---
 
-## Phase 5: Validation, Error Handling, Loading States & UI Polish
+## Phase 5: Quality Pass, Robustness, Status Codes & Optional Stretch
 
-### 1. Input Validation Matrix (Zod & Schema Enforcement)
-- `/api/auth/login`: Zod schema validates email and password; returns generic `"Invalid credentials"` (400/401) to prevent account enumeration.
-- `/api/documents`: Zod validates optional `title` with trimming and length constraints (1-255 chars).
-- `/api/documents/[id]`: Zod validates `title` and `content` dictionary. Requires at least one field to mutate.
-- `/api/documents/[id]/shares`: Zod validates `email` format and `permission` (`VIEW` | `EDIT`).
-- `/api/documents/upload`: Validates multipart payload, enforce `< 2MB` and extensions (`.txt`, `.md`, `.docx`).
+### 1. Status Code Rigor & RFC Compliance
+- **413 Payload Too Large:** `/api/documents/upload` enforces strict 2MB ceiling and returns HTTP 413 if the payload exceeds limit.
+- **415 Unsupported Media Type:** Returned if uploaded file has an unsupported extension or MIME type (only `.txt`, `.md`, `.docx` allowed).
+- **400 Bad Request:** Returned for empty files, zero-byte uploads, malformed JSON, or self-sharing attempts.
+- **401 Unauthorized:** Missing or invalid session cookie; unauthenticated users redirected to `/login`.
+- **403 Forbidden:** View-only user attempting write, non-owner attempting delete or managing shares.
+- **404 Not Found:** Conceals unauthorized document access (never leaks document existence to unshared users) or unknown user email during share invitation.
+- **500 Internal Server Error:** Generic safe messages logged securely to server console without leaking database credentials or stack traces.
 
-### 2. Status Code Consistency & Security Invariants
-- `400 Bad Request`: Client validation error, self-sharing attempt, unsupported file formats, or oversized files.
-- `401 Unauthorized`: Missing or invalid session cookie.
-- `403 Forbidden`: View-only user attempting write, non-owner attempting delete or managing shares.
-- `404 Not Found`: Conceals unauthorized document access (never leaks document existence to unshared users) or unknown user email during share invitation.
-- `500 Internal Server Error`: Generic safe messages logged securely to server console without leaking database credentials or stack traces.
+### 2. Title Constraints & Edge Cases
+- **120-Character Limit:** Title input capped at 120 characters across client input (`maxLength={120}`) and server Zod schemas (`max(120)`).
+- **Fallback to "Untitled":** If a user clears the title input and blurs or presses Enter, it gracefully falls back to `"Untitled"`.
+- **Offline / Network Save Failure Handling:** Local edits are preserved in state when network fails; a persistent amber banner alerts the user with an instant "Retry" button.
 
-### 3. Next.js Streaming Loading Skeletons
-- `src/app/dashboard/loading.tsx`: Instant animated skeleton of header, stats, and document grid while Server Components query Postgres.
-- `src/app/documents/[id]/loading.tsx`: Instant animated skeleton of document title, action controls, formatting toolbar, and white paper canvas.
+### 3. TipTap AST Sanitization
+- Sanitizes parsed HTML and markdown AST nodes to guarantee only editor-supported nodes (paragraphs, headings clamped to levels 1–3, bullet lists, ordered lists) and marks (bold, italic, underline) enter document content. Any extraneous tags (tables, iframes, script) are safely stripped or normalized.
 
-### 4. Application Error Boundaries & 404 Handlers
-- `src/app/not-found.tsx`: Clean Google Docs-inspired 404 interface with immediate button returning to Dashboard.
-- `src/app/error.tsx`: Client-side error boundary catching uncaught exceptions with `"Try again"` retry logic and fallback navigation.
+### 4. Accessibility & UI Polish
+- Toolbar buttons equipped with visible focus rings, `role="toolbar"`, and descriptive `aria-label` tags (`"Bold (Ctrl+B)"`, `"Underline (Ctrl+U)"`, etc.).
+- Keyboard shortcuts (`Ctrl/Cmd+B`, `Ctrl/Cmd+I`, `Ctrl/Cmd+U`, `Ctrl/Cmd+S`) functional and accessible.
+- Responsive design adapting gracefully from desktop down to tablet viewports.
+- Next.js Streaming Loading Skeletons (`loading.tsx` for dashboard and editor) eliminating layout shift.
+- Custom `not-found.tsx` and `error.tsx` error boundaries.
+
+### 5. Optional Stretch: Export as Markdown
+- Implemented `src/lib/exportMarkdown.ts` and integrated a one-click "Export .md" button in `DocumentEditorShell.tsx`.
+- Client-side download triggers an immediate `.md` file download named after the document title.
+- Unit tests (`src/lib/exportMarkdown.test.ts`) verify headers, lists, bold/italic, and edge cases.
+
+### 6. Verification Results
+- **ESLint:** 0 errors, 0 warnings (`npm run lint`).
+- **TypeScript:** 0 type errors (`npx tsc --noEmit`).
+- **Vitest Suite:** 41/41 tests passing across 4 test suites (`npm test`).
+- **Production Build:** `next build --webpack` compiles all static and dynamic routes cleanly.

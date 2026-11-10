@@ -10,10 +10,11 @@
 
 Ajaia is a lightweight, Google Docs-inspired collaborative document editor built to demonstrate full-stack engineering proficiency across the Next.js App Router, TypeScript, TipTap rich text, Prisma ORM, and Neon PostgreSQL.
 
-All core requirements have been implemented, verified, and backed by 32 automated unit and integration tests:
-- **Rich Text & Autosave:** TipTap editor with hydration safety (`immediatelyRender: false`), headings (H1–H3), lists, inline marks, 1.5s debounced autosave, manual save, and inline title renaming.
-- **File Upload:** Uploads and converts `.txt`, `.md`, and `.docx` files (up to 2MB) into editable TipTap documents using Node.js runtime (`mammoth` + `marked`).
+All core requirements have been implemented, verified, and backed by 41 automated unit and integration tests:
+- **Rich Text & Autosave:** TipTap editor with hydration safety (`immediatelyRender: false`), headings (H1–H3), lists, inline marks, 1.5s debounced autosave, manual save, offline error recovery with retry, and inline title renaming (120 chars max).
+- **File Upload:** Uploads and converts `.txt`, `.md`, and `.docx` files (up to 2MB) into editable TipTap documents using Node.js runtime (`mammoth` + `marked`) with strict RFC-compliant status codes (413 Payload Too Large, 415 Unsupported Media Type, 400 Bad Request) and AST schema sanitization.
 - **Granular Sharing:** Centralized pure access logic (`getDocumentRole`), owner share controls, immediate revocation, view-only enforcement (both UI and server 403), and separated Dashboard sections ("My documents" vs "Shared with me").
+- **Optional Stretch Feature:** One-click "Export .md" button in the editor converting TipTap AST directly into clean Markdown for immediate browser download.
 - **Persistence & Custom Auth:** Neon PostgreSQL with Prisma migrations, signed `httpOnly` session cookies (no NextAuth), and 3 seeded users.
 
 ---
@@ -76,7 +77,7 @@ All seeded accounts use the password: **`password123`**.
 
 ## 3. Test Suite Verification
 
-Ajaia includes 32 automated unit and integration tests passing in Vitest:
+Ajaia includes 41 automated unit and integration tests passing in Vitest (4 test files):
 
 ```bash
 npm test
@@ -93,12 +94,15 @@ npm test
   - Share permission transitions (`VIEW` -> `EDIT` and `EDIT` -> `VIEW`).
   - Immediate revocation effects on subsequent role evaluations.
   - Self-sharing prevention rule.
-- **`src/lib/convertFile.test.ts` (8 tests):**
+- **`src/lib/convertFile.test.ts` (13 tests):**
   - Plain text paragraph wrapping.
   - Markdown headings, formatting, and lists conversion to TipTap JSON.
   - `.docx` buffer pipeline integration.
   - Clean title derivation and extension extraction.
   - Unsupported extension rejection (`.zip`, `.png`).
+  - AST schema sanitization (restricting heading levels to 1–3 and filtering out unsupported marks).
+- **`src/lib/exportMarkdown.test.ts` (4 tests):**
+  - Markdown export stretch: headings, paragraphs, bold, italic, underline, lists, and empty doc resilience.
 
 ---
 

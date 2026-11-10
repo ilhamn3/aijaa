@@ -24,7 +24,11 @@ Designed and built for a full-stack take-home evaluation with a hard timebox (4â
   - Immediate revocation: revoking access deletes the share, causing subsequent requests to return `404 Not Found` (concealing document existence).
 - **File Upload & Format Conversion:**
   - Accepts `.txt`, `.md`, and `.docx` files (strictly enforced **2MB** limit).
+  - RFC-compliant error reporting: 413 (Payload Too Large), 415 (Unsupported Media Type), 400 (Bad Request).
   - Server-side conversion using Node.js runtime (`mammoth` for Word documents, `marked` for Markdown, and paragraph-wrapping for plain text).
+  - Schema sanitization ensuring uploaded AST contains only editor-supported nodes (H1-H3, lists, bold, italic, underline).
+- **Export as Markdown (Stretch Feature):**
+  - One-click "Export .md" button in the document header converting TipTap JSON into clean GitHub-flavored markdown for immediate browser download.
 - **Custom Session Authentication:**
   - Zero NextAuth overhead: signed `httpOnly` JWT session cookies (`ajaia_session`) signed with `jose`.
   - Every protected route verifies user existence directly against Postgres via server-side `getCurrentUser()`.
@@ -32,7 +36,7 @@ Designed and built for a full-stack take-home evaluation with a hard timebox (4â
 - **Robust Quality & Performance:**
   - Input validation with `zod`.
   - Streaming loading skeletons (`loading.tsx`), custom 404 (`not-found.tsx`), and error boundaries (`error.tsx`).
-  - 32 automated unit and integration tests passing in Vitest.
+  - 41 automated unit and integration tests passing in Vitest.
 
 ---
 
@@ -98,7 +102,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ## Running Automated Tests
 
-Ajaia includes 32 Vitest unit and integration tests covering pure access logic, role transitions, immediate revocations, self-sharing prevention, and multi-format file conversions:
+Ajaia includes 41 Vitest unit and integration tests covering pure access logic, role transitions, immediate revocations, self-sharing prevention, multi-format file conversions, and Markdown export:
 
 ```bash
 # Run all tests once

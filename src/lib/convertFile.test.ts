@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import type { JSONContent } from "@tiptap/react";
 import {
   convertTextToTipTap,
   convertMarkdownToTipTap,
@@ -51,32 +52,32 @@ Paragraph with **bold text**, *italic text*, and regular words.
 
       // Heading 1
       const h1 = json.content!.find(
-        (n: any) => n.type === "heading" && n.attrs?.level === 1
+        (n: JSONContent) => n.type === "heading" && n.attrs?.level === 1
       );
       expect(h1).toBeDefined();
 
       // Heading 2
       const h2 = json.content!.find(
-        (n: any) => n.type === "heading" && n.attrs?.level === 2
+        (n: JSONContent) => n.type === "heading" && n.attrs?.level === 2
       );
       expect(h2).toBeDefined();
 
       // Bold text mark
-      const paragraph = json.content!.find((n: any) => n.type === "paragraph");
+      const paragraph = json.content!.find((n: JSONContent) => n.type === "paragraph");
       expect(paragraph).toBeDefined();
       const boldNode = paragraph?.content?.find(
-        (c: any) => c.marks && c.marks.some((m: any) => m.type === "bold")
+        (c: JSONContent) => c.marks && c.marks.some((m) => m.type === "bold")
       );
       expect(boldNode).toBeDefined();
       expect(boldNode?.text).toBe("bold text");
 
       // Bullet List
-      const bulletList = json.content!.find((n: any) => n.type === "bulletList");
+      const bulletList = json.content!.find((n: JSONContent) => n.type === "bulletList");
       expect(bulletList).toBeDefined();
       expect(bulletList?.content?.length).toBe(2);
 
       // Ordered List
-      const orderedList = json.content!.find((n: any) => n.type === "orderedList");
+      const orderedList = json.content!.find((n: JSONContent) => n.type === "orderedList");
       expect(orderedList).toBeDefined();
       expect(orderedList?.content?.length).toBe(2);
     });

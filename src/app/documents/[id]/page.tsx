@@ -1,4 +1,5 @@
 import { redirect, notFound } from "next/navigation";
+import { JSONContent } from "@tiptap/react";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { getDocumentRole } from "@/lib/access";
@@ -39,9 +40,14 @@ export default async function DocumentPage({ params }: DocumentPageProps) {
     notFound();
   }
 
+  const initialDocument = {
+    ...doc,
+    content: (doc.content as unknown as JSONContent) ?? { type: "doc", content: [] },
+  };
+
   return (
     <DocumentEditorShell
-      initialDocument={doc}
+      initialDocument={initialDocument}
       role={role}
       currentUser={user}
     />

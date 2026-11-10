@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   Users,
   X,
@@ -73,13 +73,12 @@ export default function ShareDialog({
     }
   };
 
-  useEffect(() => {
-    if (isOpen) {
-      fetchShares();
-      setError(null);
-      setSuccess(null);
-    }
-  }, [isOpen]);
+  const handleOpen = () => {
+    setIsOpen(true);
+    setError(null);
+    setSuccess(null);
+    fetchShares();
+  };
 
   const handleShare = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -189,7 +188,7 @@ export default function ShareDialog({
     <>
       {/* Trigger Button (Owner Only) */}
       <button
-        onClick={() => setIsOpen(true)}
+        onClick={handleOpen}
         className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg shadow-xs transition-colors cursor-pointer"
         title="Share document settings"
       >

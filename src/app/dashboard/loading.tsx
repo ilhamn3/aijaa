@@ -1,5 +1,3 @@
-import { FileText } from "lucide-react";
-
 export default function DashboardLoading() {
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col animate-pulse">

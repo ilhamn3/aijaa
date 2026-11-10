@@ -24,7 +24,7 @@ import {
 interface DocumentData {
   id: string;
   title: string;
-  content: any;
+  content: JSONContent;
   ownerId: string;
   createdAt: Date | string;
   updatedAt: Date | string;
@@ -83,7 +83,7 @@ export default function DocumentEditorShell({
       setErrorMessage(null);
 
       try {
-        const payload: { title?: string; content?: any } = {};
+        const payload: { title?: string; content?: JSONContent } = {};
         if (titleToSend !== lastSavedTitleRef.current) {
           payload.title = titleToSend;
         }
