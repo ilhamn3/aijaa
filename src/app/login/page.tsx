@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { FileText, Lock, Mail, Users, ArrowRight, ShieldCheck } from "lucide-react";
+import { FileText, Lock, Mail, Users, ArrowRight } from "lucide-react";
 
 const SEEDED_ACCOUNTS = [
   {
@@ -99,10 +99,6 @@ export default function LoginPage() {
             ))}
             <option value="">Custom Email...</option>
           </select>
-          <div className="flex items-center gap-1 text-[11px] text-blue-700/80 mt-2">
-            <ShieldCheck className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-            <span>Default seeded password: <strong>password123</strong></span>
-          </div>
         </div>
 
         {/* Error Alert */}

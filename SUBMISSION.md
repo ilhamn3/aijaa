@@ -21,12 +21,16 @@ All core requirements have been implemented, verified, and backed by 41 automate
 
 ## 2. Reviewer Walkthrough (Step-by-Step)
 
-The database includes a pre-seeded sample document titled **"Welcome to Ajaia"** configured with realistic permissions:
-- **Alice Walker** is the **Owner**
-- **Bob Smith** is an **Editor** (`EDIT` permission)
-- **Carol Davis** is a **Viewer** (`VIEW` permission)
+The database includes a pre-seeded sample document titled **"Welcome to Ajaia"** configured with realistic permissions.
 
-All seeded accounts use the password: **`password123`**.
+### Seeded Credentials:
+| Persona | Email | Password | Pre-seeded Sample Doc Role |
+| :--- | :--- | :--- | :--- |
+| **Alice Walker** | `alice@example.com` | `password123` | **Owner** (Full edit & share control) |
+| **Bob Smith** | `bob@example.com` | `password123` | **Editor** (`Can edit` permission) |
+| **Carol Davis** | `carol@example.com` | `password123` | **Viewer** (`View only` permission) |
+
+*(The `/login` dropdown lets reviewers switch accounts instantly).*
 
 ### Step 1: Sign in as Alice (Owner)
 1. Navigate to `/login`.
